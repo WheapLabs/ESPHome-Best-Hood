@@ -80,6 +80,13 @@ Writes need a response. The hood notifies every change.
 - A hood firmware update could change the protocol.
 - The hood's Wi-Fi/cloud control is not used.
 
+## Contributing
+
+Issues and pull requests are welcome. Work on a branch, give the pull request an English title
+`type(scope): summary` (`feat`, `fix`, `docs`, `refactor`, `chore`, `test`; 72 characters at most),
+fill in the [template](.github/pull_request_template.md) and add a line to [CHANGELOG.md](CHANGELOG.md)
+under `## [Unreleased]`. Never commit a real Bluetooth or IP address, Wi-Fi credentials or API keys.
+
 ## License
 
 MIT — © 2026 WheapLabs. Not affiliated with Best or Broan-NuTone.

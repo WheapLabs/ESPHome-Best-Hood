@@ -30,4 +30,11 @@ L'ESP32 n'écrit rien avant d'avoir reçu l'état de la hotte : un redémarrage 
 
 Testé sur **une** HBN1306SS (septembre 2026) et **une** WCS1306SS (octobre 2026, [issue n° 1](https://github.com/WheapLabs/esphome-best-hood/issues/1)). L'annonce de réveil marche sur les deux modèles. ESPHome écrit « Cannot poll, not connected » pour une caractéristique que la hotte n'a pas, même quand la connexion va bien : sur une WCS1306SS, prendre son propre fichier. Une mise à jour de la hotte pourrait changer le protocole. Signalez votre modèle (ça marche ou non) dans une « issue ».
 
+## Contribuer
+
+Les issues et les pull requests sont bienvenues. Travaillez sur une branche, donnez à la pull request
+un titre en anglais `type(scope): summary`, remplissez le [modèle](.github/pull_request_template.md)
+et ajoutez une ligne au [CHANGELOG.md](CHANGELOG.md) sous `## [Unreleased]`. L'historique des
+changements est dans [CHANGELOG.md](CHANGELOG.md).
+
 Licence MIT — © 2026 WheapLabs. Aucun lien avec Best ou Broan-NuTone.
