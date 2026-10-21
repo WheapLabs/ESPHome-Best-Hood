@@ -20,7 +20,7 @@
 # Your secrets.yaml needs: wifi_ssid, wifi_password, best_hood_api_key, best_hood_ap_password
 
 substitutions:
-  # BLE MAC of YOUR hood (see README: "Find your hood's Bluetooth address")
+  # BLE MAC of YOUR hood: flash once, then read it in the logs (see README)
   hood_mac: "AA:BB:CC:DD:EE:FF"
   device_name: best-hood
   friendly_name: Best Hood
@@ -77,6 +77,16 @@ esp32_ble_server:
 esp32_ble_tracker:
   scan_parameters:
     active: true
+  # Finds your hood's Bluetooth address: until the ESP32 is connected, every hood whose name
+  # starts with "BEST" is logged at INFO, e.g. [hood] Found 'BEST HBN1306SS' at XX:XX:XX:XX:XX:XX.
+  on_ble_advertise:
+    - then:
+        - lambda: |-
+            if (id(hood).connected()) return;
+            if (strncmp(x.get_name().c_str(), "BEST", 4) != 0) return;
+            char mac[MAC_ADDRESS_PRETTY_BUFFER_SIZE];
+            ESP_LOGI("hood", "Found '%s' at %s (RSSI %d)",
+                     x.get_name().c_str(), x.address_str_to(mac), x.get_rssi());
 
 globals:
   # Last values reported by the hood; -1 = not received yet (nothing is written before that,

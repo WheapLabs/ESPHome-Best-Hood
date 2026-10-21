@@ -1,14 +1,21 @@
 # ESPHome : contrôle Bluetooth local des hottes Best / Broan-NuTone
 
-Contrôlez une hotte **Best HBN1306SS** (app « Best Kitchen ») depuis Home Assistant **sans nuage**, avec un ESP32 bon marché sous ESPHome.
+Contrôlez une hotte **Best** (app « Best Kitchen ») depuis Home Assistant **sans nuage**, avec un ESP32 bon marché sous ESPHome.
 
-Dans Home Assistant : ventilateur (4 vitesses), lumière (3 niveaux), SmartSense (mode automatique), arrêt différé, état de la connexion Bluetooth, modèle, signal Wi-Fi, boutons Redémarrer / Reconnecter. Les boutons de la hotte se reflètent tout de suite dans HA, et l'app du téléphone continue de marcher.
+## Modèles
+
+| Modèle | Fichier | Ce qui marche en Bluetooth |
+|---|---|---|
+| **HBN1306SS** | `best-hood.yaml` | tout ce qui suit |
+| **WCS1306SS** | `best-hood-wcs1306ss.yaml` | ventilateur (4 vitesses), lumière **allumée/éteinte**, SmartSense. Ce modèle n'a ni niveau de lumière ni arrêt différé en Bluetooth : l'app Best les règle par son nuage. |
+
+Avec `best-hood.yaml`, dans Home Assistant : ventilateur (4 vitesses), lumière (3 niveaux), SmartSense (mode automatique), arrêt différé, état de la connexion Bluetooth, modèle, signal Wi-Fi, boutons Redémarrer / Reconnecter. Les boutons de la hotte se reflètent tout de suite dans HA, et l'app du téléphone continue de marcher.
 
 ## Installation
 
-1. Copier `best-hood.yaml` dans le dossier ESPHome.
+1. Copier le fichier de votre modèle (voir le tableau) dans le dossier ESPHome.
 2. Ajouter dans `secrets.yaml` : `wifi_ssid`, `wifi_password`, `best_hood_api_key`, `best_hood_ap_password`.
-3. Mettre l'adresse Bluetooth de votre hotte dans `hood_mac` : installer une première fois, lire les journaux de l'ESP32 (la hotte apparaît sous le nom `BEST HBN1306SS` une fois réveillée), puis réinstaller.
+3. Mettre l'adresse Bluetooth de votre hotte dans `hood_mac` : installer une première fois avec l'adresse d'exemple, puis lire les journaux de l'ESP32 pendant une minute. Tant qu'il n'est pas connecté, il affiche chaque hotte dont le nom commence par `BEST`, par exemple `[I][hood]: Found 'BEST WCS1306SS' at XX:XX:XX:XX:XX:XX`. Copier cette adresse dans `hood_mac` et réinstaller. D'ici là, les lignes `status=133` sont normales. Raccourci : sur notre HBN1306SS, l'adresse Bluetooth = l'adresse Wi-Fi de la hotte + 2. Rien n'apparaît ? Rapprocher l'ESP32 de la hotte et fermer l'app Best Kitchen pendant le test.
 4. Ajouter l'appareil dans Home Assistant (découvert automatiquement).
 
 ## Fonctionnement
@@ -21,6 +28,6 @@ L'ESP32 n'écrit rien avant d'avoir reçu l'état de la hotte : un redémarrage 
 
 ## Limites connues
 
-Testé sur **une** HBN1306SS (septembre 2026). On ne sait pas encore si l'annonce de réveil est la même pour toutes les hottes. Une mise à jour de la hotte pourrait changer le protocole. Signalez votre modèle (ça marche ou non) dans une « issue ».
+Testé sur **une** HBN1306SS (septembre 2026) et **une** WCS1306SS (octobre 2026, [issue n° 1](https://github.com/WheapLabs/esphome-best-hood/issues/1)). L'annonce de réveil marche sur les deux modèles. ESPHome écrit « Cannot poll, not connected » pour une caractéristique que la hotte n'a pas, même quand la connexion va bien : sur une WCS1306SS, prendre son propre fichier. Une mise à jour de la hotte pourrait changer le protocole. Signalez votre modèle (ça marche ou non) dans une « issue ».
 
 Licence MIT — © 2026 WheapLabs. Aucun lien avec Best ou Broan-NuTone.
