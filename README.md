@@ -77,7 +77,7 @@ Writes need a response. The hood notifies every change.
 - Tested on **one** HBN1306SS (September 2026) and **one** WCS1306SS (October 2026, thanks to the user who reported it in [issue #1](https://github.com/WheapLabs/esphome-best-hood/issues/1)).
 - The wake-up bytes work on both models. If your hood stays invisible, please report it.
 - ESPHome logs `Cannot poll, not connected` for a characteristic your hood doesn't have, even while the link is fine. On the WCS1306SS, use its own file so these lines don't appear.
-- ESPHome also logs it for a characteristic the ESP32 can't *see*: by default ESP-IDF caches only 40 GATT characteristics and silently drops the rest. Best hoods can have more: an HBN65366SS has 54, and `21026` and `21050` were among the missing ones until the limit was raised. Both files now set `CONFIG_BT_GATTC_MAX_CACHE_CHAR: "100"`. With it, the WCS1306SS may turn out to have light levels and delay off too; please report what you see. HBN65366SS details: [godlewski/esphome-best-hood-hbn65366ss](https://github.com/godlewski/esphome-best-hood-hbn65366ss).
+- ESPHome also logs it for a characteristic the ESP32 can't *see*: by default ESP-IDF caches only 40 GATT characteristics and silently drops the rest. Best hoods can have more: an HBN65366SS has 54, and `21026` and `21050` were among the missing ones until the limit was raised. Both files now set `CONFIG_BT_GATTC_MAX_CACHE_CHAR: "100"`. With it, the WCS1306SS may turn out to have light levels and delay off too; please report what you see.
 - A hood firmware update could change the protocol.
 - The hood's Wi-Fi/cloud control is not used.
 
