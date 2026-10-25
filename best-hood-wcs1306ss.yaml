@@ -37,6 +37,10 @@ esp32:
   board: esp32dev
   framework:
     type: esp-idf
+    sdkconfig_options:
+      # ESP-IDF caches only 40 GATT characteristics by default and drops the rest silently.
+      # Best hoods can have more (the HBN65366SS has 54, with 21026 and 21050 among the last).
+      CONFIG_BT_GATTC_MAX_CACHE_CHAR: "100"
 
 logger:
   level: INFO

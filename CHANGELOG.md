@@ -6,6 +6,14 @@ All notable changes to this project are listed here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Both files raise ESP-IDF's GATT characteristic cache
+  (`CONFIG_BT_GATTC_MAX_CACHE_CHAR: "100"`). The default of 40 silently hid
+  the last characteristics of hoods that have more: on an HBN65366SS (54
+  characteristics) the light level (`21026`) and delay-off (`21050`) were
+  missing and logged `Cannot poll, not connected`.
+
 ## [1.0.0] - 2026-10-21
 
 ### Added

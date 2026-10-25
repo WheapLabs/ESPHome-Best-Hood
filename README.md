@@ -63,9 +63,9 @@ The protocol was found by analysing the Best Kitchen app:
 | 21001 | fan on/off (0/1) |
 | 21005 | fan speed (0 = off, 1-4) |
 | 21020 | light on/off (0/1), also on the WCS1306SS |
-| 21026 | light level (0 = off, 1-3), not on the WCS1306SS |
+| 21026 | light level (0 = off, 1-3), not seen on the WCS1306SS (see Known limits) |
 | 21040 | SmartSense (0/1) |
-| 21050 | delay off (0/1), not on the WCS1306SS |
+| 21050 | delay off (0/1), not seen on the WCS1306SS (see Known limits) |
 | 11065 | model |
 
 Writes need a response. The hood notifies every change.
@@ -77,6 +77,7 @@ Writes need a response. The hood notifies every change.
 - Tested on **one** HBN1306SS (September 2026) and **one** WCS1306SS (October 2026, thanks to the user who reported it in [issue #1](https://github.com/WheapLabs/esphome-best-hood/issues/1)).
 - The wake-up bytes work on both models. If your hood stays invisible, please report it.
 - ESPHome logs `Cannot poll, not connected` for a characteristic your hood doesn't have, even while the link is fine. On the WCS1306SS, use its own file so these lines don't appear.
+- ESPHome also logs it for a characteristic the ESP32 can't *see*: by default ESP-IDF caches only 40 GATT characteristics and silently drops the rest. Best hoods can have more: an HBN65366SS has 54, and `21026` and `21050` were among the missing ones until the limit was raised. Both files now set `CONFIG_BT_GATTC_MAX_CACHE_CHAR: "100"`. With it, the WCS1306SS may turn out to have light levels and delay off too; please report what you see.
 - A hood firmware update could change the protocol.
 - The hood's Wi-Fi/cloud control is not used.
 
