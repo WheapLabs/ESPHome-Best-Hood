@@ -7,7 +7,8 @@ Contrôlez une hotte **Best** (app « Best Kitchen ») depuis Home Assistant **s
 | Modèle | Fichier | Ce qui marche en Bluetooth |
 |---|---|---|
 | **HBN1306SS** | `best-hood.yaml` | tout ce qui suit |
-| **WCS1306SS** | `best-hood-wcs1306ss.yaml` | ventilateur (4 vitesses), lumière **allumée/éteinte**, SmartSense. Ce modèle n'a ni niveau de lumière ni arrêt différé en Bluetooth : l'app Best les règle par son nuage. |
+| **HBN65366SS** | `best-hood.yaml` | ventilateur (4 vitesses), lumière (3 niveaux), SmartSense, arrêt différé (testé dans la [PR n° 5](https://github.com/WheapLabs/esphome-best-hood/pull/5)) |
+| **WCS1306SS** | `best-hood-wcs1306ss.yaml` | ventilateur (4 vitesses), lumière **allumée/éteinte**, SmartSense ([issue n° 1](https://github.com/WheapLabs/esphome-best-hood/issues/1)). Avec le cache GATT augmenté dans la version 1.0.1, les niveaux de lumière et l'arrêt différé sont peut-être aussi accessibles. |
 
 Avec `best-hood.yaml`, dans Home Assistant : ventilateur (4 vitesses), lumière (3 niveaux), SmartSense (mode automatique), arrêt différé, état de la connexion Bluetooth, modèle, signal Wi-Fi, boutons Redémarrer / Reconnecter. Les boutons de la hotte se reflètent tout de suite dans HA, et l'app du téléphone continue de marcher.
 
@@ -28,7 +29,7 @@ L'ESP32 n'écrit rien avant d'avoir reçu l'état de la hotte : un redémarrage 
 
 ## Limites connues
 
-Testé sur **une** HBN1306SS (septembre 2026) et **une** WCS1306SS (octobre 2026, [issue n° 1](https://github.com/WheapLabs/esphome-best-hood/issues/1)). L'annonce de réveil marche sur les deux modèles. ESPHome écrit « Cannot poll, not connected » pour une caractéristique que la hotte n'a pas, même quand la connexion va bien : sur une WCS1306SS, prendre son propre fichier. Il l'écrit aussi pour une caractéristique que l'ESP32 ne *voit* pas : par défaut, ESP-IDF ne garde que 40 caractéristiques GATT et ignore les autres sans prévenir. Une hotte Best peut en avoir plus (54 sur une HBN65366SS, dont `21026` et `21050`). Les deux fichiers fixent maintenant `CONFIG_BT_GATTC_MAX_CACHE_CHAR: "100"` ; la WCS1306SS a donc peut-être aussi les niveaux de lumière et l'arrêt différé. Une mise à jour de la hotte pourrait changer le protocole. Signalez votre modèle (ça marche ou non) dans une « issue ».
+Testé sur **une** HBN1306SS (septembre 2026), **une** WCS1306SS (octobre 2026, [issue n° 1](https://github.com/WheapLabs/esphome-best-hood/issues/1)) et **une** HBN65366SS (octobre 2026, [PR n° 5](https://github.com/WheapLabs/esphome-best-hood/pull/5)). L'annonce de réveil marche sur les deux modèles. ESPHome écrit « Cannot poll, not connected » pour une caractéristique que la hotte n'a pas, même quand la connexion va bien : sur une WCS1306SS, prendre son propre fichier. Il l'écrit aussi pour une caractéristique que l'ESP32 ne *voit* pas : par défaut, ESP-IDF ne garde que 40 caractéristiques GATT et ignore les autres sans prévenir. Une hotte Best peut en avoir plus (54 sur une HBN65366SS, dont `21026` et `21050`). Les deux fichiers fixent maintenant `CONFIG_BT_GATTC_MAX_CACHE_CHAR: "100"` ; la WCS1306SS a donc peut-être aussi les niveaux de lumière et l'arrêt différé. Une mise à jour de la hotte pourrait changer le protocole. Signalez votre modèle (ça marche ou non) dans une « issue ».
 
 ## Contribuer
 

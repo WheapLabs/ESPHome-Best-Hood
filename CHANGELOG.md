@@ -6,6 +6,10 @@ All notable changes to this project are listed here. The format follows
 
 ## [Unreleased]
 
+### Documentation
+
+- README (EN/FR): add the confirmed HBN65366SS model and update WCS1306SS notes for v1.0.1.
+
 ## [1.0.1] - 2026-10-24
 
 ### Fixed

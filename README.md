@@ -7,7 +7,8 @@ Control a **Best** range hood (the "Best Kitchen" app) from Home Assistant **wit
 | Model | File | What works over Bluetooth |
 |---|---|---|
 | **HBN1306SS** | `best-hood.yaml` | everything below |
-| **WCS1306SS** | `best-hood-wcs1306ss.yaml` | fan (4 speeds), light **on/off**, SmartSense. This model has no light-level or delay-off characteristic over Bluetooth: Best's app reaches those through its cloud. |
+| **HBN65366SS** | `best-hood.yaml` | fan (4 speeds), light (3 levels), SmartSense, delay off (tested in [PR #5](https://github.com/WheapLabs/esphome-best-hood/pull/5)) |
+| **WCS1306SS** | `best-hood-wcs1306ss.yaml` | fan (4 speeds), light **on/off**, SmartSense ([issue #1](https://github.com/WheapLabs/esphome-best-hood/issues/1)). With the GATT cache limit raised in v1.0.1, light levels and delay off may also be accessible. |
 
 Other Best / Broan-NuTone hoods using the same app may work: please open an issue with your model, working or not.
 
@@ -74,7 +75,7 @@ Writes need a response. The hood notifies every change.
 
 ## Known limits
 
-- Tested on **one** HBN1306SS (September 2026) and **one** WCS1306SS (October 2026, thanks to the user who reported it in [issue #1](https://github.com/WheapLabs/esphome-best-hood/issues/1)).
+- Tested on **one** HBN1306SS (September 2026), **one** WCS1306SS (October 2026, [issue #1](https://github.com/WheapLabs/esphome-best-hood/issues/1)) and **one** HBN65366SS (October 2026, thanks to the contributor in [PR #5](https://github.com/WheapLabs/esphome-best-hood/pull/5)).
 - The wake-up bytes work on both models. If your hood stays invisible, please report it.
 - ESPHome logs `Cannot poll, not connected` for a characteristic your hood doesn't have, even while the link is fine. On the WCS1306SS, use its own file so these lines don't appear.
 - ESPHome also logs it for a characteristic the ESP32 can't *see*: by default ESP-IDF caches only 40 GATT characteristics and silently drops the rest. Best hoods can have more: an HBN65366SS has 54, and `21026` and `21050` were among the missing ones until the limit was raised. Both files now set `CONFIG_BT_GATTC_MAX_CACHE_CHAR: "100"`. With it, the WCS1306SS may turn out to have light levels and delay off too; please report what you see.
