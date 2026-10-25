@@ -28,7 +28,7 @@ L'ESP32 n'écrit rien avant d'avoir reçu l'état de la hotte : un redémarrage 
 
 ## Limites connues
 
-Testé sur **une** HBN1306SS (septembre 2026) et **une** WCS1306SS (octobre 2026, [issue n° 1](https://github.com/WheapLabs/esphome-best-hood/issues/1)). L'annonce de réveil marche sur les deux modèles. ESPHome écrit « Cannot poll, not connected » pour une caractéristique que la hotte n'a pas, même quand la connexion va bien : sur une WCS1306SS, prendre son propre fichier. Une mise à jour de la hotte pourrait changer le protocole. Signalez votre modèle (ça marche ou non) dans une « issue ».
+Testé sur **une** HBN1306SS (septembre 2026) et **une** WCS1306SS (octobre 2026, [issue n° 1](https://github.com/WheapLabs/esphome-best-hood/issues/1)). L'annonce de réveil marche sur les deux modèles. ESPHome écrit « Cannot poll, not connected » pour une caractéristique que la hotte n'a pas, même quand la connexion va bien : sur une WCS1306SS, prendre son propre fichier. Il l'écrit aussi pour une caractéristique que l'ESP32 ne *voit* pas : par défaut, ESP-IDF ne garde que 40 caractéristiques GATT et ignore les autres sans prévenir. Une hotte Best peut en avoir plus (54 sur une HBN65366SS, dont `21026` et `21050`). Les deux fichiers fixent maintenant `CONFIG_BT_GATTC_MAX_CACHE_CHAR: "100"` ; la WCS1306SS a donc peut-être aussi les niveaux de lumière et l'arrêt différé. Une mise à jour de la hotte pourrait changer le protocole. Signalez votre modèle (ça marche ou non) dans une « issue ».
 
 ## Contribuer
 
