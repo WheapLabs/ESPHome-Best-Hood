@@ -6,9 +6,18 @@ All notable changes to this project are listed here. The format follows
 
 ## [Unreleased]
 
+### Removed
+
+- `best-hood-wcs1306ss.yaml`: with the GATT cache fix of v1.0.1, a WCS1306SS
+  works fully with `best-hood.yaml` (fan with 4 speeds, light on/off and
+  levels, delay off, SmartSense;
+  [#1](https://github.com/WheapLabs/esphome-best-hood/issues/1)). If you use
+  the old file, switch to `best-hood.yaml`.
+
 ### Documentation
 
-- README (EN/FR): add the confirmed HBN65366SS model and update WCS1306SS notes for v1.0.1.
+- README (EN/FR): one file, `best-hood.yaml`, for the three confirmed models
+  (HBN1306SS, HBN65366SS, WCS1306SS); add the HBN65366SS and WCS1306SS notes.
 
 ## [1.0.1] - 2026-10-24
 
