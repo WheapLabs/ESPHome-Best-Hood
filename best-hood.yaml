@@ -1,7 +1,8 @@
 # Best / Broan-NuTone range hood — local Bluetooth control with an ESP32 (ESPHome)
 # https://github.com/WheapLabs/esphome-best-hood   ·   License: MIT   ·   (c) 2026 WheapLabs
 #
-# Tested on: Best HBN1306SS (one unit, September 2026). Other Best / Broan-NuTone hoods
+# Tested on: Best HBN1306SS (September 2026), HBN65366SS and WCS1306SS (October 2026), one unit
+# each. Other Best / Broan-NuTone hoods
 # that use the "Best Kitchen" app may work — please report your model.
 #
 # How it works (protocol found by analysing the Best Kitchen app):
