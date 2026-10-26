@@ -6,12 +6,15 @@ All notable changes to this project are listed here. The format follows
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-26
+
 ### Removed
 
 - `best-hood-wcs1306ss.yaml`: with the GATT cache fix of v1.0.1, a WCS1306SS
   works fully with `best-hood.yaml` (fan with 4 speeds, light on/off and
   levels, delay off, SmartSense;
-  [#1](https://github.com/WheapLabs/esphome-best-hood/issues/1)). If you use
+  [#1](https://github.com/WheapLabs/esphome-best-hood/issues/1),
+  [#8](https://github.com/WheapLabs/esphome-best-hood/pull/8)). If you use
   the old file, switch to `best-hood.yaml`.
 
 ### Documentation
@@ -49,6 +52,7 @@ All notable changes to this project are listed here. The format follows
   address are now logged while the ESP32 is not connected
   ([#2](https://github.com/WheapLabs/esphome-best-hood/pull/2)).
 
-[Unreleased]: https://github.com/WheapLabs/esphome-best-hood/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/WheapLabs/esphome-best-hood/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/WheapLabs/esphome-best-hood/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/WheapLabs/esphome-best-hood/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/WheapLabs/esphome-best-hood/releases/tag/v1.0.0
