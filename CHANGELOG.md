@@ -6,6 +6,11 @@ All notable changes to this project are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- A check on every pull request: `esphome config` on `best-hood*.yaml` with throwaway
+  secrets, and a secret scan (gitleaks).
+
 ## [1.1.0] - 2026-10-26
 
 ### Removed
