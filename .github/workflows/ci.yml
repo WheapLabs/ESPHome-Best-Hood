@@ -1,0 +1,53 @@
+name: CI
+
+# Once per commit, through its PR. Public repository: the minutes are free.
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Validates the YAML with throwaway secrets (never real ones).
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: ESPHome config
+        if: ${{ !cancelled() }}
+        run: |
+          pip install --quiet "esphome==2026.10.0"
+          cat > secrets.yaml <<SECRETS
+          wifi_ssid: "test"
+          wifi_password: "testtest"
+          best_hood_api_key: "$(python3 -c 'import base64; print(base64.b64encode(bytes(range(1, 33))).decode())')"
+          best_hood_ap_password: "testtest"
+          SECRETS
+          for f in best-hood*.yaml; do esphome config "$f" > /dev/null; done
+
+      # The official binary, pinned and checked (same version as the other repositories).
+      - name: Secret scan (gitleaks)
+        if: ${{ !cancelled() }}
+        env:
+          GITLEAKS_VERSION: 8.30.1
+          GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+        run: |
+          tgz="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -fsSL -o "$RUNNER_TEMP/$tgz" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/$tgz"
+          echo "$GITLEAKS_SHA256  $RUNNER_TEMP/$tgz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/$tgz" -C "$RUNNER_TEMP" gitleaks
+          "$RUNNER_TEMP/gitleaks" git --redact --verbose .
