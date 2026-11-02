@@ -1,7 +1,8 @@
 # Best / Broan-NuTone range hood — local Bluetooth control with an ESP32 (ESPHome)
 # https://github.com/WheapLabs/esphome-best-hood   ·   License: MIT   ·   (c) 2026 WheapLabs
 #
-# Tested on: Best HBN1306SS (September 2026), HBN65366SS and WCS1306SS (October 2026), one unit
+# Tested on: Best HBN1306SS (September 2026), HBN65366SS and WCS1306SS (October 2026),
+# HBN542912SS (November 2026, fan_speeds and light_levels set to 8), one unit
 # each. Other Best / Broan-NuTone hoods
 # that use the "Best Kitchen" app may work — please report your model.
 #
@@ -12,8 +13,8 @@
 #      Just Works). The hood drops the link if asked to store a bond, so encryption is
 #      redone on every connection.
 #   3. Values are ASCII digits in service ...20000:
-#        fan        ...21001 state (0/1)   ...21005 speed (0 = off, 1 to 4)
-#        light      ...21020 state (0/1)   ...21026 level (0 = off, 1 to 3)
+#        fan        ...21001 state (0/1)   ...21005 speed (0 = off, 1 to fan_speeds)
+#        light      ...21020 state (0/1)   ...21026 level (0 = off, 1 to light_levels)
 #        SmartSense ...21040 (0/1)         delay-off ...21050 (0/1)
 #      Writing a speed or a level turns it on; the hood notifies every change,
 #      including changes made with its own buttons.
@@ -27,6 +28,10 @@ substitutions:
   friendly_name: Best Hood
   svc: "47e36221-a32f-4980-bf17-341fd4f20000"
   base: "47e36221-a32f-4980-bf17-341fd4f"
+  # Number of fan speeds and light levels of YOUR hood: 4 and 3 on most models,
+  # 8 and 8 on the HBN542912SS (see README). Values are single digits (1 to 9).
+  fan_speeds: "4"
+  light_levels: "3"
 
 esphome:
   name: ${device_name}
@@ -201,7 +206,7 @@ script:
           if (id(r_fan_speed) < 0 || !id(hood).connected()) return;
           int want = id(hood_fan).state ? id(hood_fan).speed : 0;
           if (id(hood_fan).state && want < 1) want = 1;
-          if (want > 4) want = 4;
+          if (want > ${fan_speeds}) want = ${fan_speeds};
           if (want == id(r_fan_speed)) return;
           ESP_LOGI("hood", "fan: %d -> %d", id(r_fan_speed), want);
           if (want == 0) id(write_fan_off).execute();
@@ -225,34 +230,34 @@ script:
           int l = id(r_light_level);
           if (l < 0) return;
           auto &v = id(hood_light).remote_values;
-          int cur = v.is_on() ? (int) (v.get_brightness() * 3.0f + 0.98f) : 0;
-          if (cur > 3) cur = 3;
+          int cur = v.is_on() ? (int) (v.get_brightness() * ${light_levels}.0f + 0.98f) : 0;
+          if (cur > ${light_levels}) cur = ${light_levels};
           if (cur == l) return;
           if (l == 0) {
             auto c = id(hood_light).turn_off(); c.set_transition_length(0); c.perform();
           } else {
-            auto c = id(hood_light).turn_on(); c.set_brightness(l / 3.0f); c.set_transition_length(0); c.perform();
+            auto c = id(hood_light).turn_on(); c.set_brightness(l / ${light_levels}.0f); c.set_transition_length(0); c.perform();
           }
 
 fan:
   - platform: template
     id: hood_fan
     name: "Fan"
-    speed_count: 4
+    speed_count: ${fan_speeds}
     restore_mode: ALWAYS_OFF
     on_state:
       - script.execute: push_fan
 
 output:
-  # Virtual output: converts brightness (0-1) into hood light level 0-3.
+  # Virtual output: converts brightness (0-1) into hood light level 0 to light_levels.
   - platform: template
     id: light_out
     type: float
     write_action:
       - lambda: |-
           if (id(r_light_level) < 0 || !id(hood).connected()) return;
-          int want = state <= 0.0f ? 0 : (int) (state * 3.0f + 0.98f);
-          if (want > 3) want = 3;
+          int want = state <= 0.0f ? 0 : (int) (state * ${light_levels}.0f + 0.98f);
+          if (want > ${light_levels}) want = ${light_levels};
           if (want == id(r_light_level)) return;
           ESP_LOGI("hood", "light: %d -> %d", id(r_light_level), want);
           if (want == 0) id(write_light_off).execute();
