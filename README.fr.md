@@ -9,9 +9,9 @@ Contrôlez une hotte **Best** (app « Best Kitchen ») depuis Home Assistant **s
 | **HBN1306SS** | `best-hood.yaml` | tout ce qui suit |
 | **HBN65366SS** | `best-hood.yaml` | tout ce qui suit (testé dans la [PR n° 5](https://github.com/WheapLabs/esphome-best-hood/pull/5)) |
 | **WCS1306SS** | `best-hood.yaml` | tout ce qui suit (testé dans l'[issue n° 1](https://github.com/WheapLabs/esphome-best-hood/issues/1), avec la version 1.0.1) |
-| **HBN542912SS** | `best-hood.yaml`, [modifié pour 8 niveaux](#hottes-à-8-vitesses-et-8-niveaux-de-lumière) | tout ce qui suit, avec 8 vitesses et 8 niveaux de lumière (testé dans l'[issue n° 12](https://github.com/WheapLabs/esphome-best-hood/issues/12)) |
+| **HBN542912SS** | `best-hood.yaml`, [réglé sur 8 niveaux](#hottes-à-8-vitesses-et-8-niveaux-de-lumière) | tout ce qui suit, avec 8 vitesses et 8 niveaux de lumière (testé dans l'[issue n° 12](https://github.com/WheapLabs/esphome-best-hood/issues/12)) |
 
-Les quatre modèles confirmés utilisent le même fichier, `best-hood.yaml`. La HBN542912SS demande une petite modification, voir plus bas.
+Les quatre modèles confirmés utilisent le même fichier, `best-hood.yaml`. La HBN542912SS demande de changer deux lignes, voir plus bas.
 
 Avec `best-hood.yaml`, dans Home Assistant : ventilateur (4 vitesses, 8 sur la HBN542912SS), lumière (3 niveaux, 8 sur la HBN542912SS), SmartSense (mode automatique), arrêt différé, état de la connexion Bluetooth, modèle, signal Wi-Fi, boutons Redémarrer / Reconnecter. Les boutons de la hotte se reflètent tout de suite dans HA, et l'app du téléphone continue de marcher.
 
@@ -24,12 +24,13 @@ Avec `best-hood.yaml`, dans Home Assistant : ventilateur (4 vitesses, 8 sur la H
 
 ### Hottes à 8 vitesses et 8 niveaux de lumière
 
-Certaines hottes, comme la HBN542912SS, ont 8 vitesses et 8 niveaux de lumière au lieu de 4 et 3. Le protocole est le même, seule la valeur maximale change. Dans `best-hood.yaml` :
+La plupart des hottes ont 4 vitesses et 3 niveaux de lumière. Certaines, comme la HBN542912SS, en ont 8 et 8 : le protocole est le même, seule la valeur maximale change. La régler en haut de `best-hood.yaml` :
 
-- **Ventilateur, 4 → 8 :** `speed_count: 4` et les deux `4` de `if (want > 4) want = 4;` (script `push_fan`).
-- **Lumière, 3 → 8 :** chaque `3.0f` et `3` du code de la lumière : `get_brightness() * 3.0f`, `if (cur > 3) cur = 3;` et `l / 3.0f` (script `sync_light`), `state * 3.0f` et `if (want > 3) want = 3;` (sortie `light_out`).
-
-Ne pas toucher aux autres chiffres, surtout le `4` de `strncmp(x.get_name().c_str(), "BEST", 4)` : c'est la longueur du mot `BEST`.
+```yaml
+substitutions:
+  fan_speeds: "8"
+  light_levels: "8"
+```
 
 Merci à la personne de l'[issue n° 12](https://github.com/WheapLabs/esphome-best-hood/issues/12) qui l'a trouvé et testé.
 
@@ -43,7 +44,7 @@ L'ESP32 n'écrit rien avant d'avoir reçu l'état de la hotte : un redémarrage 
 
 ## Limites connues
 
-Testé sur **une** HBN1306SS (septembre 2026), **une** WCS1306SS (octobre 2026, [issue n° 1](https://github.com/WheapLabs/esphome-best-hood/issues/1)), **une** HBN65366SS (octobre 2026, [PR n° 5](https://github.com/WheapLabs/esphome-best-hood/pull/5)) et **une** HBN542912SS (novembre 2026, modifiée pour 8 niveaux, [issue n° 12](https://github.com/WheapLabs/esphome-best-hood/issues/12)). L'annonce de réveil marche sur tous les modèles testés. ESPHome écrit « Cannot poll, not connected » pour une caractéristique que la hotte n'a pas, même quand la connexion va bien. Il l'écrit aussi pour une caractéristique que l'ESP32 ne *voit* pas : par défaut, ESP-IDF ne garde que 40 caractéristiques GATT et ignore les autres sans prévenir. Une hotte Best peut en avoir plus (54 sur une HBN65366SS, dont `21026` et `21050`). `best-hood.yaml` fixe `CONFIG_BT_GATTC_MAX_CACHE_CHAR: "100"` : c'est ce qui a rendu la WCS1306SS complète (ventilateur 4 vitesses, lumière avec curseur continu calé sur ses niveaux, arrêt différé, SmartSense). Une ancienne copie du fichier a besoin de cette ligne. Une mise à jour de la hotte pourrait changer le protocole. Signalez votre modèle (ça marche ou non) dans une « issue ».
+Testé sur **une** HBN1306SS (septembre 2026), **une** WCS1306SS (octobre 2026, [issue n° 1](https://github.com/WheapLabs/esphome-best-hood/issues/1)), **une** HBN65366SS (octobre 2026, [PR n° 5](https://github.com/WheapLabs/esphome-best-hood/pull/5)) et **une** HBN542912SS (novembre 2026, 8 vitesses et 8 niveaux, [issue n° 12](https://github.com/WheapLabs/esphome-best-hood/issues/12)). L'annonce de réveil marche sur tous les modèles testés. ESPHome écrit « Cannot poll, not connected » pour une caractéristique que la hotte n'a pas, même quand la connexion va bien. Il l'écrit aussi pour une caractéristique que l'ESP32 ne *voit* pas : par défaut, ESP-IDF ne garde que 40 caractéristiques GATT et ignore les autres sans prévenir. Une hotte Best peut en avoir plus (54 sur une HBN65366SS, dont `21026` et `21050`). `best-hood.yaml` fixe `CONFIG_BT_GATTC_MAX_CACHE_CHAR: "100"` : c'est ce qui a rendu la WCS1306SS complète (ventilateur 4 vitesses, lumière avec curseur continu calé sur ses niveaux, arrêt différé, SmartSense). Une ancienne copie du fichier a besoin de cette ligne. Une mise à jour de la hotte pourrait changer le protocole. Signalez votre modèle (ça marche ou non) dans une « issue ».
 
 ## Contribuer
 
