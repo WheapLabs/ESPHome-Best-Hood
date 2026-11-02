@@ -9,8 +9,9 @@ Control a **Best** range hood (the "Best Kitchen" app) from Home Assistant **wit
 | **HBN1306SS** | `best-hood.yaml` | everything below |
 | **HBN65366SS** | `best-hood.yaml` | everything below (tested in [PR #5](https://github.com/WheapLabs/esphome-best-hood/pull/5)) |
 | **WCS1306SS** | `best-hood.yaml` | everything below (tested in [issue #1](https://github.com/WheapLabs/esphome-best-hood/issues/1), with v1.0.1) |
+| **HBN542912SS** | `best-hood.yaml`, [edited for 8 levels](#hoods-with-8-fan-speeds-and-8-light-levels) | everything below, with 8 fan speeds and 8 light levels (tested in [issue #12](https://github.com/WheapLabs/esphome-best-hood/issues/12)) |
 
-All three confirmed models use the same file, `best-hood.yaml`.
+All four confirmed models use the same file, `best-hood.yaml`. The HBN542912SS needs a small edit, see below.
 
 Other Best / Broan-NuTone hoods using the same app may work: please open an issue with your model, working or not.
 
@@ -18,8 +19,8 @@ With `best-hood.yaml` you get in Home Assistant:
 
 | Entity | What it does |
 |---|---|
-| Fan | 4 speeds, off |
-| Light | on/off and a continuous slider (brightness is mapped to level 1-3) |
+| Fan | 4 speeds, off (8 on the HBN542912SS, see below) |
+| Light | on/off and a continuous slider (brightness is mapped to level 1-3, or 1-8) |
 | SmartSense | the hood's automatic mode |
 | Delay off | the hood's delayed stop |
 | Bluetooth | is the ESP32 connected to the hood |
@@ -53,6 +54,17 @@ Shortcut: on our HBN1306SS the Bluetooth address is the hood's Wi-Fi MAC + 2 (fo
 
 Nothing shows up? Keep the ESP32 within a few metres of the hood and close the Best Kitchen app on your phone while testing.
 
+### Hoods with 8 fan speeds and 8 light levels
+
+Some hoods, like the HBN542912SS, have 8 fan speeds and 8 light levels instead of 4 and 3. The protocol is the same, only the highest value changes. In `best-hood.yaml`:
+
+- **Fan, 4 → 8:** `speed_count: 4` and the two `4`s in `if (want > 4) want = 4;` (script `push_fan`).
+- **Light, 3 → 8:** every `3.0f` and `3` in the light code: `get_brightness() * 3.0f`, `if (cur > 3) cur = 3;` and `l / 3.0f` (script `sync_light`), `state * 3.0f` and `if (want > 3) want = 3;` (output `light_out`).
+
+Leave the other numbers alone, in particular the `4` in `strncmp(x.get_name().c_str(), "BEST", 4)`: it is the length of the word `BEST`.
+
+Thanks to the contributor in [issue #12](https://github.com/WheapLabs/esphome-best-hood/issues/12) who found and tested this.
+
 ## How it works
 
 The protocol was found by analysing the Best Kitchen app:
@@ -64,11 +76,12 @@ The protocol was found by analysing the Best Kitchen app:
 | Characteristic (…suffix) | Meaning |
 |---|---|
 | 21001 | fan on/off (0/1) |
-| 21005 | fan speed (0 = off, 1-4) |
+| 21005 | fan speed (0 = off, 1-4; 1-8 on the HBN542912SS) |
 | 21020 | light on/off (0/1) |
-| 21026 | light level (0 = off, 1-3) |
+| 21026 | light level (0 = off, 1-3; 1-8 on the HBN542912SS) |
 | 21040 | SmartSense (0/1) |
 | 21050 | delay off (0/1) |
+| 21090 | light colour temperature, 8 settings (found on the HBN542912SS; not in `best-hood.yaml` yet) |
 | 11065 | model |
 
 Writes need a response. The hood notifies every change.
@@ -77,8 +90,8 @@ Writes need a response. The hood notifies every change.
 
 ## Known limits
 
-- Tested on **one** HBN1306SS (September 2026), **one** WCS1306SS (October 2026, v1.0.1, [issue #1](https://github.com/WheapLabs/esphome-best-hood/issues/1)) and **one** HBN65366SS (October 2026, thanks to the contributor in [PR #5](https://github.com/WheapLabs/esphome-best-hood/pull/5)).
-- The wake-up bytes work on both models. If your hood stays invisible, please report it.
+- Tested on **one** HBN1306SS (September 2026), **one** WCS1306SS (October 2026, v1.0.1, [issue #1](https://github.com/WheapLabs/esphome-best-hood/issues/1)), **one** HBN65366SS (October 2026, thanks to the contributor in [PR #5](https://github.com/WheapLabs/esphome-best-hood/pull/5)) and **one** HBN542912SS (November 2026, edited for 8 levels, [issue #12](https://github.com/WheapLabs/esphome-best-hood/issues/12)).
+- The wake-up bytes work on every model tested so far. If your hood stays invisible, please report it.
 - ESPHome logs `Cannot poll, not connected` for a characteristic your hood doesn't have, even while the link is fine.
 - ESPHome also logs it for a characteristic the ESP32 can't *see*: by default ESP-IDF caches only 40 GATT characteristics and silently drops the rest. Best hoods can have more: an HBN65366SS has 54, and `21026` and `21050` were among the missing ones until the limit was raised. `best-hood.yaml` sets `CONFIG_BT_GATTC_MAX_CACHE_CHAR: "100"`, which is what made the WCS1306SS work completely (it was tested with v1.0.1 or later; an older copy of the file needs this line).
 - A hood firmware update could change the protocol.

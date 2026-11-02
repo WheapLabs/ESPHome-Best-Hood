@@ -11,6 +11,13 @@ All notable changes to this project are listed here. The format follows
 - A check on every pull request: `esphome config` on `best-hood*.yaml` with throwaway
   secrets, and a secret scan (gitleaks).
 
+### Documentation
+
+- README (EN/FR): the HBN542912SS is confirmed working, with 8 fan speeds and
+  8 light levels after a small edit of `best-hood.yaml`; list the values to
+  change, and note its light colour temperature characteristic (`21090`)
+  ([#12](https://github.com/WheapLabs/esphome-best-hood/issues/12)).
+
 ## [1.1.0] - 2026-10-26
 
 ### Removed
