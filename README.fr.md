@@ -50,7 +50,11 @@ Testé sur **une** HBN1306SS (septembre 2026), **une** WCS1306SS (octobre 2026, 
 
 Les issues et les pull requests sont bienvenues. Travaillez sur une branche, donnez à la pull request
 un titre en anglais `type(scope): summary`, remplissez le [modèle](.github/pull_request_template.md)
-et ajoutez une ligne au [CHANGELOG.md](CHANGELOG.md) sous `## [Unreleased]`. L'historique des
-changements est dans [CHANGELOG.md](CHANGELOG.md).
+et ajoutez une fiche de changement dans [changes/](changes/README.md)
+(`changes/<nom-court>.<patch|minor|major>.md`) au lieu de modifier `CHANGELOG.md`.
+
+Les versions sont automatiques : après chaque fusion dans `main`, GitHub transforme les fiches en
+attente en une nouvelle version dans [CHANGELOG.md](CHANGELOG.md), puis crée son étiquette et sa
+[publication](https://github.com/WheapLabs/esphome-best-hood/releases).
 
 Licence MIT — © 2026 WheapLabs. Aucun lien avec Best ou Broan-NuTone.

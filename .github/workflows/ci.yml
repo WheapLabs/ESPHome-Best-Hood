@@ -26,6 +26,13 @@ jobs:
         with:
           python-version: "3.13"
 
+      # The change notes of changes/ and the release tool (see changes/README.md).
+      - name: Change notes and release tool
+        if: ${{ !cancelled() }}
+        run: |
+          python3 tools/release.py --check
+          python3 -m unittest discover -s tests -v
+
       - name: ESPHome config
         if: ${{ !cancelled() }}
         run: |

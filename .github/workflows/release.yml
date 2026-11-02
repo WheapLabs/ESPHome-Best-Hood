@@ -1,0 +1,54 @@
+name: Release
+
+# After a merge into main:
+# 1. if change notes wait in changes/, tools/release.py turns them into a version
+#    (a new section of CHANGELOG.md) and the bot commits it to main;
+# 2. tag v<version> and publish its GitHub release, with that section as the text.
+# Nothing happens if the tag already exists. One run at a time: two quick merges are released in turn.
+on:
+  push:
+    branches: [main]
+    paths: [CHANGELOG.md, "changes/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # The tip of main, not the pushed commit: an earlier run may have committed a version since.
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Version from the change notes
+        run: |
+          version=$(python3 tools/release.py)
+          if [ -n "$version" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A CHANGELOG.md changes
+            git commit -m "chore(release): $version"
+            git push origin HEAD:main
+          fi
+
+      - name: Tag and release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(python3 tools/release.py --current)
+          [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "unreadable version: $version"; exit 1; }
+          tag="v$version"
+          if git ls-remote --exit-code --tags origin "refs/tags/$tag" > /dev/null; then
+            echo "$tag already exists"; exit 0
+          fi
+          python3 tools/release.py --notes "$version" > "$RUNNER_TEMP/notes.md"
+          gh release create "$tag" --target "$(git rev-parse HEAD)" --title "$tag" \
+            --notes-file "$RUNNER_TEMP/notes.md"

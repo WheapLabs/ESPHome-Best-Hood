@@ -102,9 +102,13 @@ Writes need a response. The hood notifies every change.
 
 Issues and pull requests are welcome. Work on a branch, give the pull request an English title
 `type(scope): summary` (`feat`, `fix`, `docs`, `refactor`, `chore`, `test`; 72 characters at most),
-fill in the [template](.github/pull_request_template.md) and add a line to [CHANGELOG.md](CHANGELOG.md)
-under `## [Unreleased]`. Every pull request is checked automatically (the YAML must pass `esphome config`, and a secret
-scan must find nothing). Never commit a real Bluetooth or IP address, Wi-Fi credentials or API keys.
+fill in the [template](.github/pull_request_template.md) and add a change note in [changes/](changes/README.md)
+(`changes/<short-name>.<patch|minor|major>.md`) instead of editing `CHANGELOG.md`. Every pull request is checked
+automatically (the YAML must pass `esphome config`, the change notes must be valid, and a secret scan must find
+nothing). Never commit a real Bluetooth or IP address, Wi-Fi credentials or API keys.
+
+Releases are automatic: after each merge into `main`, GitHub turns the waiting notes into a new version in
+[CHANGELOG.md](CHANGELOG.md), then tags it and publishes its [release](https://github.com/WheapLabs/esphome-best-hood/releases).
 
 ## License
 
