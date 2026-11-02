@@ -7,6 +7,24 @@ All notable changes to this project are listed here. The format follows
 Pending changes wait as notes in [changes/](changes/README.md); each merge into `main`
 turns them into a new version here, with its tag and GitHub release.
 
+## [1.2.0] - 2026-11-02
+
+### Added
+
+- A check on every pull request: `esphome config` on `best-hood*.yaml` with throwaway
+  secrets, and a secret scan (gitleaks).
+- `best-hood.yaml`: two substitutions, `fan_speeds` (default `"4"`) and
+  `light_levels` (default `"3"`), for hoods with more levels. Set both to `"8"`
+  on an HBN542912SS ([#12](https://github.com/WheapLabs/esphome-best-hood/issues/12)).
+  The defaults behave exactly as before.
+
+### Documentation
+
+- README (EN/FR): the HBN542912SS is confirmed working, with 8 fan speeds and
+  8 light levels; explain the two substitutions, and note its light colour
+  temperature characteristic (`21090`)
+  ([#12](https://github.com/WheapLabs/esphome-best-hood/issues/12)).
+
 ## [1.1.0] - 2026-10-26
 
 ### Removed
@@ -53,6 +71,7 @@ turns them into a new version here, with its tag and GitHub release.
   address are now logged while the ESP32 is not connected
   ([#2](https://github.com/WheapLabs/esphome-best-hood/pull/2)).
 
+[1.2.0]: https://github.com/WheapLabs/esphome-best-hood/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/WheapLabs/esphome-best-hood/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/WheapLabs/esphome-best-hood/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/WheapLabs/esphome-best-hood/releases/tag/v1.0.0
