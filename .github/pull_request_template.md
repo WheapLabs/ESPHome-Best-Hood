@@ -26,5 +26,5 @@ Types: feat, fix, docs, refactor, chore, test. Example: `fix(wcs1306ss): keep th
 ## Checklist
 
 - [ ] No secret, token, password, address, public IP, personal domain, face or personal name in the diff
-- [ ] `CHANGELOG.md` updated under `## [Unreleased]`
+- [ ] A change note in `changes/` (see [changes/README.md](../changes/README.md)); `CHANGELOG.md` not edited
 - [ ] Branch up to date with `main`; `esphome config` passes for each changed YAML file
