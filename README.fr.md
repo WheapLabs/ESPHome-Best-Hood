@@ -11,7 +11,7 @@ Contrôlez une hotte **Best** (app « Best Kitchen ») depuis Home Assistant **s
 | **WCS1306SS** | `best-hood.yaml` | tout ce qui suit (testé dans l'[issue n° 1](https://github.com/WheapLabs/esphome-best-hood/issues/1), avec la version 1.0.1) |
 | **HBN542912SS** | `best-hood.yaml`, [réglé sur 8 niveaux](#hottes-à-8-vitesses-et-8-niveaux-de-lumière) | tout ce qui suit, avec 8 vitesses et 8 niveaux de lumière (testé dans l'[issue n° 12](https://github.com/WheapLabs/esphome-best-hood/issues/12)) |
 
-Les quatre modèles utilisent le même fichier, `best-hood.yaml`. La HBN542912SS demande de changer deux lignes, voir plus bas.
+Les quatre modèles utilisent le même fichier, `best-hood.yaml`. La HBN542912SS demande de changer trois lignes, voir plus bas.
 
 Avec `best-hood.yaml`, dans Home Assistant : ventilateur (4 vitesses, 8 sur la HBN542912SS), lumière (3 niveaux, 8 sur la HBN542912SS), SmartSense (mode automatique), arrêt différé, état de la connexion Bluetooth, modèle, signal Wi-Fi, boutons Redémarrer / Reconnecter. Les boutons de la hotte se reflètent tout de suite dans HA, et l'app du téléphone continue de marcher.
 
@@ -38,11 +38,27 @@ ignore la vitesse écrite dans `21005`. Si votre hotte a 8 vitesses mais utilise
 
 Merci à la personne de l'[issue n° 12](https://github.com/WheapLabs/esphome-best-hood/issues/12) qui l'a trouvé et testé, `21017` compris.
 
+### Réglages en plus (HBN542912SS)
+
+La HBN542912SS a aussi une température de couleur de la lumière et d'autres options SmartSense. Les activer en haut
+de `best-hood.yaml` :
+
+```yaml
+substitutions:
+  extra_settings: "true"
+```
+
+On obtient : température de couleur (`21090`, 0 = la plus chaude à 7 = la plus froide), mode SmartSense (`21092`,
+chaleur seule ou chaleur + qualité de l'air), sensibilité (`21042`, basse, moyenne, haute), allumage de la lumière par
+SmartSense (`21094`) et sa durée (`21096`, 1 à 10 min, envoyée en millisecondes). Éteint par défaut : ces entités sont
+alors cachées et jamais lues ni écrites, donc les autres hottes marchent et écrivent leurs journaux exactement comme
+avant. Merci à la personne de l'[issue n° 16](https://github.com/WheapLabs/esphome-best-hood/issues/16) qui les a trouvés.
+
 ## Fonctionnement
 
 1. **Annonce de réveil** : la hotte reste invisible tant qu'elle ne capte pas l'identifiant `0x5665` + `E4 D6 14 27 35 47`, que l'ESP32 diffuse en continu. Ces 6 octets ne sont **pas une adresse** : c'est une constante fixe inscrite dans l'app Best Kitchen, la même pour toutes les hottes et tous les téléphones (rien à changer).
 2. **Chiffrement sans jumelage** (`no_bond`, Just Works), refait à chaque connexion : la hotte coupe la liaison si on lui demande d'enregistrer un jumelage.
-3. **Valeurs** : un chiffre ASCII par caractéristique (voir le tableau du README anglais). La HBN542912SS a aussi la température de couleur de la lumière en `21090` (0 = la plus chaude, 7 = la plus froide), pas encore dans `best-hood.yaml`.
+3. **Valeurs** : un chiffre ASCII par caractéristique (voir le tableau du README anglais). La HBN542912SS a aussi des [réglages en plus](#réglages-en-plus-hbn542912ss).
 
 L'ESP32 n'écrit rien avant d'avoir reçu l'état de la hotte : un redémarrage de l'ESP32 n'éteint jamais la hotte.
 

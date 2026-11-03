@@ -11,7 +11,7 @@ Control a **Best** range hood (the "Best Kitchen" app) from Home Assistant **wit
 | **WCS1306SS** | `best-hood.yaml` | everything below (tested in [issue #1](https://github.com/WheapLabs/esphome-best-hood/issues/1), with v1.0.1) |
 | **HBN542912SS** | `best-hood.yaml`, [set to 8 levels](#hoods-with-8-fan-speeds-and-8-light-levels) | everything below, with 8 fan speeds and 8 light levels (tested in [issue #12](https://github.com/WheapLabs/esphome-best-hood/issues/12)) |
 
-All four models use the same file, `best-hood.yaml`. The HBN542912SS needs two lines changed, see below.
+All four models use the same file, `best-hood.yaml`. The HBN542912SS needs three lines changed, see below.
 
 Other Best / Broan-NuTone hoods using the same app may work: please open an issue with your model, working or not.
 
@@ -25,6 +25,7 @@ With `best-hood.yaml` you get in Home Assistant:
 | Delay off | the hood's delayed stop |
 | Bluetooth | is the ESP32 connected to the hood |
 | Model, Wi-Fi signal, Restart, Reconnect | diagnostics |
+| Light colour temperature, SmartSense mode, sensitivity, light and light delay | only with `extra_settings: "true"` (HBN542912SS, see below) |
 
 Changes made with the hood's own buttons show up in Home Assistant right away. The phone app keeps working alongside the ESP32.
 
@@ -70,6 +71,27 @@ ignores speed writes to `21005`. If your hood has 8 speeds but still uses `21005
 
 Thanks to the contributor in [issue #12](https://github.com/WheapLabs/esphome-best-hood/issues/12) who found and tested this, `21017` included.
 
+### Extra settings (HBN542912SS)
+
+The HBN542912SS also has a light colour temperature and more SmartSense options. Turn them on at the top of
+`best-hood.yaml`:
+
+```yaml
+substitutions:
+  extra_settings: "true"
+```
+
+| Entity | Characteristic | Values |
+|---|---|---|
+| Light colour temperature | 21090 | 0 (warmest) to 7 (coolest) |
+| SmartSense mode | 21092 | Heat only (1), Heat and air quality (2) |
+| SmartSense sensitivity | 21042 | Low (0), Medium (1), High (2) |
+| SmartSense light | 21094 | SmartSense also turns the light on (0/1) |
+| SmartSense light delay | 21096 | 1 to 10 min (sent in milliseconds, `60000` = 1 min) |
+
+Off by default: these entities are then hidden and never read or written, so hoods without these settings work and
+log exactly as before. Thanks to the contributor in [issue #16](https://github.com/WheapLabs/esphome-best-hood/issues/16) who found them.
+
 ## How it works
 
 The protocol was found by analysing the Best Kitchen app:
@@ -87,7 +109,7 @@ The protocol was found by analysing the Best Kitchen app:
 | 21026 | light level (0 = off, 1-3; 1-8 on the HBN542912SS) |
 | 21040 | SmartSense (0/1) |
 | 21050 | delay off (0/1) |
-| 21090 | light colour temperature on the HBN542912SS (0 = warmest to 7 = coolest; not in `best-hood.yaml` yet) |
+| 21090, 21092, 21042, 21094, 21096 | HBN542912SS extra settings, see [Extra settings](#extra-settings-hbn542912ss) |
 | 11065 | model |
 
 Writes need a response. The hood notifies every change.
