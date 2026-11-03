@@ -9,9 +9,9 @@ Control a **Best** range hood (the "Best Kitchen" app) from Home Assistant **wit
 | **HBN1306SS** | `best-hood.yaml` | everything below |
 | **HBN65366SS** | `best-hood.yaml` | everything below (tested in [PR #5](https://github.com/WheapLabs/esphome-best-hood/pull/5)) |
 | **WCS1306SS** | `best-hood.yaml` | everything below (tested in [issue #1](https://github.com/WheapLabs/esphome-best-hood/issues/1), with v1.0.1) |
-| **HBN542912SS** | `best-hood.yaml`, [set to 8 levels](#hoods-with-8-fan-speeds-and-8-light-levels) | everything below, with 8 fan speeds and 8 light levels (tested in [issue #12](https://github.com/WheapLabs/esphome-best-hood/issues/12)) |
+| **HBN542912SS** | `best-hood.yaml`, [set to 8 levels](#hoods-with-8-fan-speeds-and-8-light-levels) | light (8 levels), SmartSense and fan on/off work; **setting the fan speed from Home Assistant does not work yet**, and speed changes made elsewhere take up to 60 s to show ([issue #12](https://github.com/WheapLabs/esphome-best-hood/issues/12)) |
 
-All four confirmed models use the same file, `best-hood.yaml`. The HBN542912SS needs two lines changed, see below.
+All four models use the same file, `best-hood.yaml`. The HBN542912SS needs two lines changed, see below, and is only partly working.
 
 Other Best / Broan-NuTone hoods using the same app may work: please open an issue with your model, working or not.
 
@@ -91,7 +91,8 @@ Writes need a response. The hood notifies every change.
 
 ## Known limits
 
-- Tested on **one** HBN1306SS (September 2026), **one** WCS1306SS (October 2026, v1.0.1, [issue #1](https://github.com/WheapLabs/esphome-best-hood/issues/1)), **one** HBN65366SS (October 2026, thanks to the contributor in [PR #5](https://github.com/WheapLabs/esphome-best-hood/pull/5)) and **one** HBN542912SS (November 2026, 8 speeds and 8 levels, [issue #12](https://github.com/WheapLabs/esphome-best-hood/issues/12)).
+- Tested on **one** HBN1306SS (September 2026), **one** WCS1306SS (October 2026, v1.0.1, [issue #1](https://github.com/WheapLabs/esphome-best-hood/issues/1)), **one** HBN65366SS (October 2026, thanks to the contributor in [PR #5](https://github.com/WheapLabs/esphome-best-hood/pull/5)) and **one** HBN542912SS (November 2026, 8 speeds and 8 levels, partly working, [issue #12](https://github.com/WheapLabs/esphome-best-hood/issues/12)).
+- On the HBN542912SS, the hood ignores fan speed writes to `21005` and does not notify its speed changes (the ESP32 only sees them with its 60 s poll). The app probably writes the speed elsewhere; this is being investigated in [issue #12](https://github.com/WheapLabs/esphome-best-hood/issues/12).
 - The wake-up bytes work on every model tested so far. If your hood stays invisible, please report it.
 - ESPHome logs `Cannot poll, not connected` for a characteristic your hood doesn't have, even while the link is fine.
 - ESPHome also logs it for a characteristic the ESP32 can't *see*: by default ESP-IDF caches only 40 GATT characteristics and silently drops the rest. Best hoods can have more: an HBN65366SS has 54, and `21026` and `21050` were among the missing ones until the limit was raised. `best-hood.yaml` sets `CONFIG_BT_GATTC_MAX_CACHE_CHAR: "100"`, which is what made the WCS1306SS work completely (it was tested with v1.0.1 or later; an older copy of the file needs this line).
