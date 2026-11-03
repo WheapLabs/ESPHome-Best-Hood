@@ -2,7 +2,8 @@
 # https://github.com/WheapLabs/esphome-best-hood   ·   License: MIT   ·   (c) 2026 WheapLabs
 #
 # Tested on: Best HBN1306SS (September 2026), HBN65366SS and WCS1306SS (October 2026),
-# HBN542912SS (November 2026, fan_speeds and light_levels set to 8), one unit
+# HBN542912SS (November 2026, fan_speeds and light_levels set to 8; fan speed from Home
+# Assistant not working yet, see issue #12), one unit
 # each. Other Best / Broan-NuTone hoods
 # that use the "Best Kitchen" app may work — please report your model.
 #
@@ -180,23 +181,23 @@ script:
   - id: write_smartsense
     mode: queued
     parameters:
-      actif: bool
+      enabled: bool
     then:
       - ble_client.ble_write:
           id: hood
           service_uuid: "${svc}"
           characteristic_uuid: "${base}21040"
-          value: !lambda 'return std::vector<uint8_t>{(uint8_t) (actif ? 49 : 48)};'
+          value: !lambda 'return std::vector<uint8_t>{(uint8_t) (enabled ? 49 : 48)};'
   - id: write_delay_off
     mode: queued
     parameters:
-      actif: bool
+      enabled: bool
     then:
       - ble_client.ble_write:
           id: hood
           service_uuid: "${svc}"
           characteristic_uuid: "${base}21050"
-          value: !lambda 'return std::vector<uint8_t>{(uint8_t) (actif ? 49 : 48)};'
+          value: !lambda 'return std::vector<uint8_t>{(uint8_t) (enabled ? 49 : 48)};'
 
   # --- HA -> hood: only writes when the request differs from what the hood reports ---
   - id: push_fan
@@ -282,11 +283,11 @@ switch:
     turn_on_action:
       - script.execute:
           id: write_smartsense
-          actif: true
+          enabled: true
     turn_off_action:
       - script.execute:
           id: write_smartsense
-          actif: false
+          enabled: false
   - platform: template
     name: "Delay off"
     icon: mdi:fan-clock
@@ -295,11 +296,11 @@ switch:
     turn_on_action:
       - script.execute:
           id: write_delay_off
-          actif: true
+          enabled: true
     turn_off_action:
       - script.execute:
           id: write_delay_off
-          actif: false
+          enabled: false
 
 button:
   - platform: restart
