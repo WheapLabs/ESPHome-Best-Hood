@@ -2,8 +2,7 @@
 # https://github.com/WheapLabs/esphome-best-hood   ·   License: MIT   ·   (c) 2026 WheapLabs
 #
 # Tested on: Best HBN1306SS (September 2026), HBN65366SS and WCS1306SS (October 2026),
-# HBN542912SS (November 2026, fan_speeds and light_levels set to 8; fan speed from Home
-# Assistant not working yet, see issue #12), one unit
+# HBN542912SS (November 2026, fan_speeds and light_levels set to 8, see issue #12), one unit
 # each. Other Best / Broan-NuTone hoods
 # that use the "Best Kitchen" app may work — please report your model.
 #
@@ -15,6 +14,7 @@
 #      redone on every connection.
 #   3. Values are ASCII digits in service ...20000:
 #        fan        ...21001 state (0/1)   ...21005 speed (0 = off, 1 to fan_speeds)
+#                   (...21017 instead of ...21005 on the HBN542912SS, see fan_speed_char)
 #        light      ...21020 state (0/1)   ...21026 level (0 = off, 1 to light_levels)
 #        SmartSense ...21040 (0/1)         delay-off ...21050 (0/1)
 #      Writing a speed or a level turns it on; the hood notifies every change,
@@ -33,6 +33,10 @@ substitutions:
   # 8 and 8 on the HBN542912SS (see README). Values are single digits (1 to 9).
   fan_speeds: "4"
   light_levels: "3"
+  # Characteristic that holds the fan speed: 21005 on the 4-speed models, 21017 on the
+  # HBN542912SS (8 speeds), which ignores writes to 21005. Chosen from fan_speeds; replace
+  # the line with fan_speed_char: "21005" or "21017" if your hood behaves differently.
+  fan_speed_char: ${ "21017" if fan_speeds | int > 4 else "21005" }
 
 esphome:
   name: ${device_name}
@@ -150,7 +154,7 @@ script:
       - ble_client.ble_write:
           id: hood
           service_uuid: "${svc}"
-          characteristic_uuid: "${base}21005"
+          characteristic_uuid: "${base}${fan_speed_char}"
           value: !lambda 'return std::vector<uint8_t>{(uint8_t) (48 + n)};'
   - id: write_fan_off
     mode: queued
@@ -334,7 +338,7 @@ text_sensor:
     id: t_fan_speed
     internal: true
     service_uuid: "${svc}"
-    characteristic_uuid: "${base}21005"
+    characteristic_uuid: "${base}${fan_speed_char}"
     notify: true
     update_interval: 60s
     on_value:
