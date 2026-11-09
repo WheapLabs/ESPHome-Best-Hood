@@ -7,6 +7,29 @@ All notable changes to this project are listed here. The format follows
 Pending changes wait as notes in [changes/](changes/README.md); each merge into `main`
 turns them into a new version here, with its tag and GitHub release.
 
+## [1.3.0] - 2026-11-09
+
+### Added
+
+- `extra_settings: "true"` adds the light colour temperature and the SmartSense mode, sensitivity,
+  light and light delay found on the HBN542912SS. Off by default: the entities are then hidden and
+  never read or written, so other hoods work as before. Found and tested by the contributor in
+  [#16](https://github.com/WheapLabs/esphome-best-hood/issues/16)
+  ([#17](https://github.com/WheapLabs/esphome-best-hood/pull/17)).
+
+### Changed
+
+- The automatic check validates the file with ESPHome 2026.10.2, the latest release.
+
+### Fixed
+
+- HBN542912SS: the fan speed set from Home Assistant now reaches the hood. With more than 4 fan
+  speeds, `best-hood.yaml` writes and reads the speed on characteristic `21017` instead of `21005`,
+  which this model ignores; the new `fan_speed_char` setting can force either one. Hoods with 4
+  speeds are unchanged. Found and tested by the contributor in
+  [#12](https://github.com/WheapLabs/esphome-best-hood/issues/12)
+  ([#17](https://github.com/WheapLabs/esphome-best-hood/pull/17)).
+
 ## [1.2.1] - 2026-11-03
 
 ### Documentation
@@ -79,6 +102,7 @@ turns them into a new version here, with its tag and GitHub release.
   address are now logged while the ESP32 is not connected
   ([#2](https://github.com/WheapLabs/esphome-best-hood/pull/2)).
 
+[1.3.0]: https://github.com/WheapLabs/esphome-best-hood/compare/v1.2.1...v1.3.0
 [1.2.1]: https://github.com/WheapLabs/esphome-best-hood/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/WheapLabs/esphome-best-hood/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/WheapLabs/esphome-best-hood/compare/v1.0.1...v1.1.0
