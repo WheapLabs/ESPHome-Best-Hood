@@ -36,7 +36,7 @@ jobs:
       - name: ESPHome config
         if: ${{ !cancelled() }}
         run: |
-          pip install --quiet "esphome==2026.10.0"
+          pip install --quiet "esphome==2026.10.2"
           cat > secrets.yaml <<SECRETS
           wifi_ssid: "test"
           wifi_password: "testtest"

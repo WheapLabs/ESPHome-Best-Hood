@@ -2,8 +2,7 @@
 # https://github.com/WheapLabs/esphome-best-hood   ·   License: MIT   ·   (c) 2026 WheapLabs
 #
 # Tested on: Best HBN1306SS (September 2026), HBN65366SS and WCS1306SS (October 2026),
-# HBN542912SS (November 2026, fan_speeds and light_levels set to 8; fan speed from Home
-# Assistant not working yet, see issue #12), one unit
+# HBN542912SS (November 2026, fan_speeds and light_levels set to 8, see issue #12), one unit
 # each. Other Best / Broan-NuTone hoods
 # that use the "Best Kitchen" app may work — please report your model.
 #
@@ -15,6 +14,7 @@
 #      redone on every connection.
 #   3. Values are ASCII digits in service ...20000:
 #        fan        ...21001 state (0/1)   ...21005 speed (0 = off, 1 to fan_speeds)
+#                   (...21017 instead of ...21005 on the HBN542912SS, see fan_speed_char)
 #        light      ...21020 state (0/1)   ...21026 level (0 = off, 1 to light_levels)
 #        SmartSense ...21040 (0/1)         delay-off ...21050 (0/1)
 #      Writing a speed or a level turns it on; the hood notifies every change,
@@ -33,6 +33,19 @@ substitutions:
   # 8 and 8 on the HBN542912SS (see README). Values are single digits (1 to 9).
   fan_speeds: "4"
   light_levels: "3"
+  # Characteristic that holds the fan speed: 21005 on the 4-speed models, 21017 on the
+  # HBN542912SS (8 speeds), which ignores writes to 21005. Chosen from fan_speeds; replace
+  # the line with fan_speed_char: "21005" or "21017" if your hood behaves differently.
+  fan_speed_char: ${ "21017" if fan_speeds | int > 4 else "21005" }
+  # Light colour temperature and SmartSense options found on the HBN542912SS (issue #16):
+  # "true" adds them to Home Assistant. Off by default, so other hoods are unchanged.
+  extra_settings: "false"
+  # Derived from extra_settings, do not edit. While it is off, the hidden extra entities point
+  # at characteristics every hood has (model 11065, delay-off 21050) and never write them, so
+  # hoods without these settings log no new warning.
+  extras_on: ${ "true" if (extra_settings | string | lower) == "true" else "false" }
+  extras_hidden: ${ "false" if extras_on == "true" else "true" }
+  extras_poll: ${ "60s" if extras_on == "true" else "never" }
 
 esphome:
   name: ${device_name}
@@ -118,6 +131,27 @@ globals:
     type: bool
     restore_value: false
     initial_value: "false"
+  # Extra settings (extra_settings), -1 = not received yet.
+  - id: r_color_temp
+    type: int
+    restore_value: false
+    initial_value: "-1"
+  - id: r_ss_mode
+    type: int
+    restore_value: false
+    initial_value: "-1"
+  - id: r_ss_sensitivity
+    type: int
+    restore_value: false
+    initial_value: "-1"
+  - id: r_ss_light
+    type: int
+    restore_value: false
+    initial_value: "-1"
+  - id: r_ss_light_delay
+    type: int
+    restore_value: false
+    initial_value: "-1"
 
 ble_client:
   - mac_address: ${hood_mac}
@@ -136,6 +170,13 @@ ble_client:
         - component.update: t_smartsense
         - component.update: t_delay_off
         - component.update: t_model
+        - lambda: |-
+            if (!${extras_on}) return;
+            id(t_color_temp).update();
+            id(t_ss_mode).update();
+            id(t_ss_sensitivity).update();
+            id(t_ss_light).update();
+            id(t_ss_light_delay).update();
     on_disconnect:
       then:
         - logger.log: "Hood disconnected"
@@ -150,7 +191,7 @@ script:
       - ble_client.ble_write:
           id: hood
           service_uuid: "${svc}"
-          characteristic_uuid: "${base}21005"
+          characteristic_uuid: "${base}${fan_speed_char}"
           value: !lambda 'return std::vector<uint8_t>{(uint8_t) (48 + n)};'
   - id: write_fan_off
     mode: queued
@@ -199,6 +240,61 @@ script:
           characteristic_uuid: "${base}21050"
           value: !lambda 'return std::vector<uint8_t>{(uint8_t) (enabled ? 49 : 48)};'
 
+  # --- Extra settings (extra_settings) ---
+  - id: write_color_temp
+    mode: queued
+    parameters:
+      n: int
+    then:
+      - ble_client.ble_write:
+          id: hood
+          service_uuid: "${svc}"
+          characteristic_uuid: "${base}${ '21090' if extras_on == 'true' else '21050' }"
+          value: !lambda 'return std::vector<uint8_t>{(uint8_t) (48 + n)};'
+  - id: write_ss_mode
+    mode: queued
+    parameters:
+      n: int
+    then:
+      - ble_client.ble_write:
+          id: hood
+          service_uuid: "${svc}"
+          characteristic_uuid: "${base}${ '21092' if extras_on == 'true' else '21050' }"
+          value: !lambda 'return std::vector<uint8_t>{(uint8_t) (48 + n)};'
+  - id: write_ss_sensitivity
+    mode: queued
+    parameters:
+      n: int
+    then:
+      - ble_client.ble_write:
+          id: hood
+          service_uuid: "${svc}"
+          characteristic_uuid: "${base}${ '21042' if extras_on == 'true' else '21050' }"
+          value: !lambda 'return std::vector<uint8_t>{(uint8_t) (48 + n)};'
+  - id: write_ss_light
+    mode: queued
+    parameters:
+      enabled: bool
+    then:
+      - ble_client.ble_write:
+          id: hood
+          service_uuid: "${svc}"
+          characteristic_uuid: "${base}${ '21094' if extras_on == 'true' else '21050' }"
+          value: !lambda 'return std::vector<uint8_t>{(uint8_t) (enabled ? 49 : 48)};'
+  # The light delay is sent in milliseconds, as ASCII digits ("60000" = 1 min).
+  - id: write_ss_light_delay
+    mode: queued
+    parameters:
+      minutes: int
+    then:
+      - ble_client.ble_write:
+          id: hood
+          service_uuid: "${svc}"
+          characteristic_uuid: "${base}${ '21096' if extras_on == 'true' else '21050' }"
+          value: !lambda |-
+            std::string ms = std::to_string(minutes * 60000);
+            return std::vector<uint8_t>(ms.begin(), ms.end());
+
   # --- HA -> hood: only writes when the request differs from what the hood reports ---
   - id: push_fan
     mode: restart
@@ -238,6 +334,26 @@ script:
             auto c = id(hood_light).turn_off(); c.set_transition_length(0); c.perform();
           } else {
             auto c = id(hood_light).turn_on(); c.set_brightness(l / ${light_levels}.0f); c.set_transition_length(0); c.perform();
+          }
+
+  - id: sync_extras
+    mode: restart
+    then:
+      - lambda: |-
+          if (!${extras_on}) return;
+          int ct = id(r_color_temp);
+          if (ct >= 0 && id(hood_color_temp).state != ct) id(hood_color_temp).publish_state(ct);
+          int d = id(r_ss_light_delay);
+          if (d >= 1 && id(hood_ss_light_delay).state != d) id(hood_ss_light_delay).publish_state(d);
+          int m = id(r_ss_mode);
+          if (m >= 1 && m <= 2) {
+            auto cur = id(hood_ss_mode).active_index();
+            if (!cur.has_value() || *cur != (size_t) (m - 1)) id(hood_ss_mode).publish_state((size_t) (m - 1));
+          }
+          int sn = id(r_ss_sensitivity);
+          if (sn >= 0 && sn <= 2) {
+            auto cur = id(hood_ss_sensitivity).active_index();
+            if (!cur.has_value() || *cur != (size_t) sn) id(hood_ss_sensitivity).publish_state((size_t) sn);
           }
 
 fan:
@@ -302,6 +418,90 @@ switch:
           id: write_delay_off
           enabled: false
 
+  - platform: template
+    name: "SmartSense light"
+    icon: mdi:lightbulb-auto
+    internal: ${extras_hidden}
+    restore_mode: DISABLED
+    lambda: 'return id(r_ss_light) == 1;'
+    turn_on_action:
+      - lambda: |-
+          if (${extras_on} && id(r_ss_light) >= 0 && id(hood).connected()) id(write_ss_light).execute(true);
+    turn_off_action:
+      - lambda: |-
+          if (${extras_on} && id(r_ss_light) >= 0 && id(hood).connected()) id(write_ss_light).execute(false);
+
+number:
+  # Extra settings (extra_settings); unknown until the hood reports them.
+  - platform: template
+    name: "Light colour temperature"
+    id: hood_color_temp
+    icon: mdi:thermometer
+    internal: ${extras_hidden}
+    min_value: 0
+    max_value: 7
+    step: 1
+    mode: slider
+    initial_value: nan
+    optimistic: true
+    set_action:
+      - lambda: |-
+          int v = (int) x;
+          if (v < 0) v = 0;
+          if (v > 7) v = 7;
+          if (${extras_on} && id(r_color_temp) >= 0 && id(hood).connected() && v != id(r_color_temp))
+            id(write_color_temp).execute(v);
+  - platform: template
+    name: "SmartSense light delay"
+    id: hood_ss_light_delay
+    icon: mdi:timer-outline
+    internal: ${extras_hidden}
+    unit_of_measurement: min
+    min_value: 1
+    max_value: 10
+    step: 1
+    mode: box
+    initial_value: nan
+    optimistic: true
+    set_action:
+      - lambda: |-
+          int v = (int) x;
+          if (v < 1) v = 1;
+          if (v > 10) v = 10;
+          if (${extras_on} && id(r_ss_light_delay) >= 0 && id(hood).connected() && v != id(r_ss_light_delay))
+            id(write_ss_light_delay).execute(v);
+
+select:
+  - platform: template
+    name: "SmartSense mode"
+    id: hood_ss_mode
+    icon: mdi:auto-mode
+    internal: ${extras_hidden}
+    options:
+      - "Heat only"
+      - "Heat and air quality"
+    optimistic: true
+    set_action:
+      - lambda: |-
+          int v = x == "Heat only" ? 1 : 2;
+          if (${extras_on} && id(r_ss_mode) >= 0 && id(hood).connected() && v != id(r_ss_mode))
+            id(write_ss_mode).execute(v);
+  - platform: template
+    name: "SmartSense sensitivity"
+    id: hood_ss_sensitivity
+    icon: mdi:tune-variant
+    internal: ${extras_hidden}
+    options:
+      - "Low"
+      - "Medium"
+      - "High"
+    optimistic: true
+    set_action:
+      - lambda: |-
+          int v = x == "Low" ? 0 : (x == "Medium" ? 1 : 2);
+          if (${extras_on} && id(r_ss_sensitivity) >= 0 && id(hood).connected() && v != id(r_ss_sensitivity))
+            id(write_ss_sensitivity).execute(v);
+
 button:
   - platform: restart
     name: "Restart"
@@ -334,7 +534,7 @@ text_sensor:
     id: t_fan_speed
     internal: true
     service_uuid: "${svc}"
-    characteristic_uuid: "${base}21005"
+    characteristic_uuid: "${base}${fan_speed_char}"
     notify: true
     update_interval: 60s
     on_value:
@@ -391,3 +591,80 @@ text_sensor:
     characteristic_uuid: "${base}11065"
     update_interval: 3600s
     entity_category: diagnostic
+  # Extra settings (extra_settings): read only while it is on.
+  - platform: ble_client
+    ble_client_id: hood
+    id: t_color_temp
+    internal: true
+    service_uuid: "${svc}"
+    characteristic_uuid: "${base}${ '21090' if extras_on == 'true' else '11065' }"
+    notify: ${extras_on}
+    update_interval: ${extras_poll}
+    on_value:
+      then:
+        - lambda: |-
+            if (!${extras_on}) return;
+            if (x.empty() || x[0] < '0' || x[0] > '7') return;
+            id(r_color_temp) = x[0] - '0';
+            id(sync_extras).execute();
+  - platform: ble_client
+    ble_client_id: hood
+    id: t_ss_mode
+    internal: true
+    service_uuid: "${svc}"
+    characteristic_uuid: "${base}${ '21092' if extras_on == 'true' else '11065' }"
+    notify: ${extras_on}
+    update_interval: ${extras_poll}
+    on_value:
+      then:
+        - lambda: |-
+            if (!${extras_on}) return;
+            if (x.empty() || x[0] < '1' || x[0] > '2') return;
+            id(r_ss_mode) = x[0] - '0';
+            id(sync_extras).execute();
+  - platform: ble_client
+    ble_client_id: hood
+    id: t_ss_sensitivity
+    internal: true
+    service_uuid: "${svc}"
+    characteristic_uuid: "${base}${ '21042' if extras_on == 'true' else '11065' }"
+    notify: ${extras_on}
+    update_interval: ${extras_poll}
+    on_value:
+      then:
+        - lambda: |-
+            if (!${extras_on}) return;
+            if (x.empty() || x[0] < '0' || x[0] > '2') return;
+            id(r_ss_sensitivity) = x[0] - '0';
+            id(sync_extras).execute();
+  - platform: ble_client
+    ble_client_id: hood
+    id: t_ss_light
+    internal: true
+    service_uuid: "${svc}"
+    characteristic_uuid: "${base}${ '21094' if extras_on == 'true' else '11065' }"
+    notify: ${extras_on}
+    update_interval: ${extras_poll}
+    on_value:
+      then:
+        - lambda: |-
+            if (!${extras_on}) return;
+            if (x.empty() || (x[0] != '0' && x[0] != '1')) return;
+            id(r_ss_light) = x[0] - '0';
+            id(sync_extras).execute();
+  - platform: ble_client
+    ble_client_id: hood
+    id: t_ss_light_delay
+    internal: true
+    service_uuid: "${svc}"
+    characteristic_uuid: "${base}${ '21096' if extras_on == 'true' else '11065' }"
+    notify: ${extras_on}
+    update_interval: ${extras_poll}
+    on_value:
+      then:
+        - lambda: |-
+            if (!${extras_on}) return;
+            int ms = atoi(x.c_str());
+            if (ms < 60000 || ms > 600000) return;
+            id(r_ss_light_delay) = ms / 60000;
+            id(sync_extras).execute();

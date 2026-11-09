@@ -9,9 +9,9 @@ Control a **Best** range hood (the "Best Kitchen" app) from Home Assistant **wit
 | **HBN1306SS** | `best-hood.yaml` | everything below |
 | **HBN65366SS** | `best-hood.yaml` | everything below (tested in [PR #5](https://github.com/WheapLabs/esphome-best-hood/pull/5)) |
 | **WCS1306SS** | `best-hood.yaml` | everything below (tested in [issue #1](https://github.com/WheapLabs/esphome-best-hood/issues/1), with v1.0.1) |
-| **HBN542912SS** | `best-hood.yaml`, [set to 8 levels](#hoods-with-8-fan-speeds-and-8-light-levels) | light (8 levels), SmartSense and fan on/off work; **setting the fan speed from Home Assistant does not work yet**, and speed changes made elsewhere take up to 60 s to show ([issue #12](https://github.com/WheapLabs/esphome-best-hood/issues/12)) |
+| **HBN542912SS** | `best-hood.yaml`, [set to 8 levels](#hoods-with-8-fan-speeds-and-8-light-levels) | everything below, with 8 fan speeds and 8 light levels (tested in [issue #12](https://github.com/WheapLabs/esphome-best-hood/issues/12)) |
 
-All four models use the same file, `best-hood.yaml`. The HBN542912SS needs two lines changed, see below, and is only partly working.
+All four models use the same file, `best-hood.yaml`. The HBN542912SS needs three lines changed, see below.
 
 Other Best / Broan-NuTone hoods using the same app may work: please open an issue with your model, working or not.
 
@@ -25,6 +25,7 @@ With `best-hood.yaml` you get in Home Assistant:
 | Delay off | the hood's delayed stop |
 | Bluetooth | is the ESP32 connected to the hood |
 | Model, Wi-Fi signal, Restart, Reconnect | diagnostics |
+| Light colour temperature, SmartSense mode, sensitivity, light and light delay | only with `extra_settings: "true"` (HBN542912SS, see below) |
 
 Changes made with the hood's own buttons show up in Home Assistant right away. The phone app keeps working alongside the ESP32.
 
@@ -56,7 +57,7 @@ Nothing shows up? Keep the ESP32 within a few metres of the hood and close the B
 
 ### Hoods with 8 fan speeds and 8 light levels
 
-Most hoods have 4 fan speeds and 3 light levels. Some, like the HBN542912SS, have 8 and 8: the protocol is the same, only the highest value changes. Set it at the top of `best-hood.yaml`:
+Most hoods have 4 fan speeds and 3 light levels. Some, like the HBN542912SS, have 8 and 8. Set it at the top of `best-hood.yaml`:
 
 ```yaml
 substitutions:
@@ -64,7 +65,32 @@ substitutions:
   light_levels: "8"
 ```
 
-Thanks to the contributor in [issue #12](https://github.com/WheapLabs/esphome-best-hood/issues/12) who found and tested this.
+With 8 fan speeds, the file also writes and reads the speed on `21017` instead of `21005` (`fan_speed_char`): the HBN542912SS
+ignores speed writes to `21005`. If your hood has 8 speeds but still uses `21005`, or the other way round, replace the
+`fan_speed_char` line with `fan_speed_char: "21005"` (or `"21017"`) and please tell us in an issue.
+
+Thanks to the contributor in [issue #12](https://github.com/WheapLabs/esphome-best-hood/issues/12) who found and tested this, `21017` included.
+
+### Extra settings (HBN542912SS)
+
+The HBN542912SS also has a light colour temperature and more SmartSense options. Turn them on at the top of
+`best-hood.yaml`:
+
+```yaml
+substitutions:
+  extra_settings: "true"
+```
+
+| Entity | Characteristic | Values |
+|---|---|---|
+| Light colour temperature | 21090 | 0 (warmest) to 7 (coolest) |
+| SmartSense mode | 21092 | Heat only (1), Heat and air quality (2) |
+| SmartSense sensitivity | 21042 | Low (0), Medium (1), High (2) |
+| SmartSense light | 21094 | SmartSense also turns the light on (0/1) |
+| SmartSense light delay | 21096 | 1 to 10 min (sent in milliseconds, `60000` = 1 min) |
+
+Off by default: these entities are then hidden and never read or written, so hoods without these settings work and
+log exactly as before. Thanks to the contributor in [issue #16](https://github.com/WheapLabs/esphome-best-hood/issues/16) who found them.
 
 ## How it works
 
@@ -77,12 +103,13 @@ The protocol was found by analysing the Best Kitchen app:
 | Characteristic (…suffix) | Meaning |
 |---|---|
 | 21001 | fan on/off (0/1) |
-| 21005 | fan speed (0 = off, 1-4; 1-8 on the HBN542912SS) |
+| 21005 | fan speed (0 = off, 1-4); on the HBN542912SS, it reports the speed but ignores writes |
+| 21017 | fan speed on the HBN542912SS (0 = off, 1-8), read and written |
 | 21020 | light on/off (0/1) |
 | 21026 | light level (0 = off, 1-3; 1-8 on the HBN542912SS) |
 | 21040 | SmartSense (0/1) |
 | 21050 | delay off (0/1) |
-| 21090 | light colour temperature, 8 settings (found on the HBN542912SS; not in `best-hood.yaml` yet) |
+| 21090, 21092, 21042, 21094, 21096 | HBN542912SS extra settings, see [Extra settings](#extra-settings-hbn542912ss) |
 | 11065 | model |
 
 Writes need a response. The hood notifies every change.
@@ -91,8 +118,8 @@ Writes need a response. The hood notifies every change.
 
 ## Known limits
 
-- Tested on **one** HBN1306SS (September 2026), **one** WCS1306SS (October 2026, v1.0.1, [issue #1](https://github.com/WheapLabs/esphome-best-hood/issues/1)), **one** HBN65366SS (October 2026, thanks to the contributor in [PR #5](https://github.com/WheapLabs/esphome-best-hood/pull/5)) and **one** HBN542912SS (November 2026, 8 speeds and 8 levels, partly working, [issue #12](https://github.com/WheapLabs/esphome-best-hood/issues/12)).
-- On the HBN542912SS, the hood ignores fan speed writes to `21005` and does not notify its speed changes (the ESP32 only sees them with its 60 s poll). The app probably writes the speed elsewhere; this is being investigated in [issue #12](https://github.com/WheapLabs/esphome-best-hood/issues/12).
+- Tested on **one** HBN1306SS (September 2026), **one** WCS1306SS (October 2026, v1.0.1, [issue #1](https://github.com/WheapLabs/esphome-best-hood/issues/1)), **one** HBN65366SS (October 2026, thanks to the contributor in [PR #5](https://github.com/WheapLabs/esphome-best-hood/pull/5)) and **one** HBN542912SS (November 2026, 8 speeds and 8 levels, thanks to the contributor in [issue #12](https://github.com/WheapLabs/esphome-best-hood/issues/12)).
+- Which hoods use `21017` for the fan speed is a guess from one model: `best-hood.yaml` picks it for every hood with more than 4 speeds.
 - The wake-up bytes work on every model tested so far. If your hood stays invisible, please report it.
 - ESPHome logs `Cannot poll, not connected` for a characteristic your hood doesn't have, even while the link is fine.
 - ESPHome also logs it for a characteristic the ESP32 can't *see*: by default ESP-IDF caches only 40 GATT characteristics and silently drops the rest. Best hoods can have more: an HBN65366SS has 54, and `21026` and `21050` were among the missing ones until the limit was raised. `best-hood.yaml` sets `CONFIG_BT_GATTC_MAX_CACHE_CHAR: "100"`, which is what made the WCS1306SS work completely (it was tested with v1.0.1 or later; an older copy of the file needs this line).
