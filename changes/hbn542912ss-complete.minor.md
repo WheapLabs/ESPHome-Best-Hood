@@ -2,7 +2,7 @@
 
 - `extra_settings: "true"` adds the light colour temperature and the SmartSense mode, sensitivity,
   light and light delay found on the HBN542912SS. Off by default: the entities are then hidden and
-  never read or written, so other hoods work as before. Found by the contributor in
+  never read or written, so other hoods work as before. Found and tested by the contributor in
   [#16](https://github.com/WheapLabs/esphome-best-hood/issues/16)
   ([#17](https://github.com/WheapLabs/esphome-best-hood/pull/17)).
 
