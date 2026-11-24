@@ -7,6 +7,20 @@ All notable changes to this project are listed here. The format follows
 Pending changes wait as notes in [changes/](changes/README.md); each merge into `main`
 turns them into a new version here, with its tag and GitHub release.
 
+## [1.4.0] - 2026-11-24
+
+### Added
+
+- Automatic Bluetooth watchdog: if the encrypted link to the hood stays down, the ESP32 retries a
+  clean Bluetooth reconnect after 2 and 4 minutes, then performs a clean reboot after 6 minutes to
+  reset the BLE stack without needing a power cycle (reboot is skipped while `hood_mac` is still
+  the placeholder `AA:BB:CC:DD:EE:FF` during initial setup).
+
+### Fixed
+
+- Reset the cached fan speed on Bluetooth disconnect so the `Bluetooth` diagnostic sensor only
+  reports connected again once encrypted readings actually resume.
+
 ## [1.3.0] - 2026-11-09
 
 ### Added
@@ -102,6 +116,7 @@ turns them into a new version here, with its tag and GitHub release.
   address are now logged while the ESP32 is not connected
   ([#2](https://github.com/WheapLabs/esphome-best-hood/pull/2)).
 
+[1.4.0]: https://github.com/WheapLabs/esphome-best-hood/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/WheapLabs/esphome-best-hood/compare/v1.2.1...v1.3.0
 [1.2.1]: https://github.com/WheapLabs/esphome-best-hood/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/WheapLabs/esphome-best-hood/compare/v1.1.0...v1.2.0
