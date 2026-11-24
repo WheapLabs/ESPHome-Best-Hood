@@ -152,6 +152,11 @@ globals:
     type: int
     restore_value: false
     initial_value: "-1"
+  # Consecutive minutes without an active encrypted Bluetooth link to the hood.
+  - id: ble_down_minutes
+    type: int
+    restore_value: false
+    initial_value: "0"
 
 ble_client:
   - mac_address: ${hood_mac}
@@ -179,9 +184,41 @@ ble_client:
             id(t_ss_light_delay).update();
     on_disconnect:
       then:
-        - logger.log: "Hood disconnected"
+        - lambda: |-
+            id(r_fan_speed) = -1;
+            ESP_LOGW("hood", "Hood disconnected");
+
+interval:
+  # Bluetooth watchdog: if the link stays down (or connected without readings),
+  # try a clean reconnect first, then reboot the ESP32 to reset the BLE stack.
+  - interval: 60s
+    then:
+      - lambda: |-
+          if (id(hood).connected() && id(r_fan_speed) >= 0) {
+            id(ble_down_minutes) = 0;
+            return;
+          }
+          id(ble_down_minutes) += 1;
+          int mins = id(ble_down_minutes);
+          ESP_LOGW("hood", "Bluetooth down for %d min", mins);
+          if (mins == 2 || mins == 4) {
+            ESP_LOGW("hood", "Trying soft Bluetooth reconnect...");
+            id(reconnect_hood).execute();
+          } else if (mins >= 6) {
+            if (std::string("${hood_mac}") == "AA:BB:CC:DD:EE:FF") return;
+            ESP_LOGE("hood", "Bluetooth still down after %d min, rebooting ESP32", mins);
+            id(hood_restart).press();
+          }
 
 script:
+  # --- Clean BLE reconnect (used by the Reconnect button and the watchdog) ---
+  - id: reconnect_hood
+    mode: single
+    then:
+      - ble_client.disconnect: hood
+      - delay: 3s
+      - ble_client.connect: hood
+
   # --- Writes to the hood (one ASCII digit) ---
   - id: write_fan_speed
     mode: queued
@@ -504,15 +541,14 @@ select:
 
 button:
   - platform: restart
+    id: hood_restart
     name: "Restart"
     entity_category: diagnostic
   - platform: template
     name: "Reconnect"
     entity_category: diagnostic
     on_press:
-      - ble_client.disconnect: hood
-      - delay: 3s
-      - ble_client.connect: hood
+      - script.execute: reconnect_hood
 
 binary_sensor:
   - platform: template
